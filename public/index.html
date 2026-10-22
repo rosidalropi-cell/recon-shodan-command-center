@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07091b">
+<title>Recon & Shodan | OSINT Command Center</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#050718;--panel:#090e27;--panel2:#0c1432;--line:#3426a8;--cyan:#58e5ff;--violet:#a58bff;--pink:#ff5bd6;--green:#42f5bc;--amber:#ffbd5a;--red:#ff557c;--muted:#8195c9}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#171044 0,#07091b 48%,#030511 100%);color:#e7edff;font:13px/1.4 system-ui,Segoe UI,Arial,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid #3325a6;background:#080b20ed;position:sticky;top:0;z-index:900}
+.logo{font-size:28px;color:var(--violet);filter:drop-shadow(0 0 8px #6f4cff)}.brand{font-size:18px;font-weight:800;letter-spacing:1px}.sub{color:var(--cyan);font-size:11px;letter-spacing:2px}.grow{flex:1}.status{border:1px solid #184d66;border-radius:20px;padding:7px 12px;color:var(--green);white-space:nowrap}
+.wrap{padding:14px;max-width:1800px;margin:auto}.grid{display:grid;grid-template-columns:220px minmax(320px,1fr) 300px;gap:12px}.stack{display:grid;gap:12px;align-content:start}
+.panel{border:1px solid var(--line);background:linear-gradient(145deg,#0b1230ed,#060a1bed);border-radius:9px;overflow:hidden;box-shadow:0 0 18px #2817a322,inset 0 0 20px #18205a22}
+.ph{padding:11px 12px;border-bottom:1px solid #29236d;background:linear-gradient(90deg,#20105c88,#09112a);font-weight:750;color:#c8c5ff;letter-spacing:.5px;display:flex;align-items:center;gap:8px}.ph span:last-child{margin-left:auto;color:var(--cyan);font-size:10px}.body{padding:12px}.muted{color:var(--muted)}.navitem{display:flex;gap:9px;padding:10px;border-bottom:1px solid #171f48;color:#b6c9ff}.navitem b{color:var(--cyan);width:18px}.navitem.active{background:#24105a;border-left:3px solid var(--pink);color:white}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:#0b1532;border:1px solid #253b7e;border-radius:7px;padding:10px}.metric small{display:block;color:#91a7de}.metric strong{display:block;font-size:22px;color:var(--cyan);margin-top:4px}.metric .good{color:var(--green)}.metric .bad{color:var(--red)}
+label{display:block;color:#aebce8;margin:9px 0 5px}input,select{width:100%;padding:10px;background:#050a20;color:#eaf1ff;border:1px solid #34448a;border-radius:6px;outline:none}input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #58e5ff22}
+button{cursor:pointer;border:1px solid #6550e8;background:linear-gradient(100deg,#251064,#102f69);color:#fff;padding:10px 12px;border-radius:6px;font-weight:700}button:hover{filter:brightness(1.2)}button:disabled{opacity:.5;cursor:wait}.btnrow{display:flex;gap:8px;margin-top:10px}.btnrow button{flex:1}.secondary{background:#0a1733;border-color:#244a79;color:#9cecff}
+#map{height:380px;background:#050a20}.mapfoot{padding:8px 10px;color:var(--muted);font-size:11px;border-top:1px solid #1d2859}
+table{width:100%;border-collapse:collapse;font-size:11px}th{text-align:left;color:#9aaeff;background:#0e1737;font-weight:700}td,th{padding:8px 6px;border-bottom:1px solid #1b2450;vertical-align:top}td{color:#d5e0ff;overflow-wrap:anywhere}.pill{display:inline-block;border:1px solid #25634f;color:var(--green);background:#082a2b;padding:2px 6px;border-radius:5px;font-size:10px}.pill.warn{border-color:#815523;color:var(--amber);background:#2b1c0c}.pill.err{border-color:#7e2947;color:var(--red);background:#2b0c20}.feedrow{padding:9px 0;border-bottom:1px solid #1b2450}.feedrow strong{display:block;color:#c8d6ff}.feedrow small{color:var(--muted)}.console{background:#030614;border:1px solid #1c2a61;border-radius:6px;padding:9px;max-height:180px;overflow:auto;font:11px/1.6 ui-monospace,monospace;color:#70e8ff;white-space:pre-wrap}.bottomgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.empty{color:#8193c3;text-align:center;padding:20px 8px}.foot{padding:14px;color:#6075ae;font-size:10px;letter-spacing:1px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:1050px){.grid{grid-template-columns:190px minmax(0,1fr)}.rightcol{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));display:grid}.rightcol .panel{min-width:0}}
+@media(max-width:680px){header{padding:10px;gap:9px}.brand{font-size:14px}.sub{font-size:9px}.status{font-size:10px;padding:5px 8px}.wrap{padding:8px}.grid{grid-template-columns:1fr}.leftcol,.rightcol{display:grid;grid-template-columns:1fr}.centercol{grid-row:1}#map{height:300px}.bottomgrid{grid-template-columns:1fr}.kpi{grid-template-columns:1fr 1fr}.hide-mobile{display:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">◈</div><div><div class="brand">RECON & SHODAN</div><div class="sub">OSINT COMMAND CENTER</div></div>
+ <div class="grow"></div><div class="status" id="apiStatus">● API CHECKING</div>
+</header>
+<div class="wrap">
+<div class="grid">
+ <aside class="stack leftcol">
+  <section class="panel"><div class="ph">◈ NAVIGATION <span>01</span></div>
+   <div class="navitem active"><b>⌂</b> Command Center</div><div class="navitem"><b>⌕</b> Passive Recon</div><div class="navitem"><b>◎</b> Shodan Host Data</div><div class="navitem"><b>⌖</b> Geospatial Assets</div><div class="navitem"><b>≋</b> Event Log</div>
+  </section>
+  <section class="panel"><div class="ph">⌕ TARGET INTELLIGENCE</div><div class="body">
+   <label for="target">Domain or IP address</label><input id="target" placeholder="example.com or 8.8.8.8" autocomplete="off">
+   <div class="btnrow"><button id="reconBtn">RUN PASSIVE RECON</button></div>
+   <div class="btnrow"><button class="secondary" id="shodanBtn">SHODAN LOOKUP</button></div>
+   <p class="muted">Only public lookups. No port scanning or exploitation.</p>
+  </div></section>
+  <section class="panel"><div class="ph">◉ BACKEND STATUS</div><div class="body">
+   <div class="feedrow"><strong>Cloudflare Worker</strong><small id="workerStatus">Checking connection…</small></div>
+   <div class="feedrow"><strong>Shodan API</strong><small id="shodanStatus">Not checked yet</small></div>
+   <div class="feedrow"><strong>DNS over HTTPS</strong><small>Public DNS query endpoint</small></div>
+   <div class="feedrow"><strong>Refresh interval</strong><small>30 seconds for status; queries run on demand</small></div>
+  </div></section>
+ </aside>
+ <main class="stack centercol">
+  <section class="panel"><div class="ph">◎ GLOBAL ASSET MAP <span id="mapLabel">No verified coordinates yet</span></div><div id="map"></div><div class="mapfoot">Map markers are added only from returned geolocation data. IP geolocation is approximate, not an exact device location.</div></section>
+  <section class="panel"><div class="ph">⌘ TARGET SUMMARY <span id="targetState">WAITING FOR INPUT</span></div><div class="body"><div class="kpi">
+   <div class="metric"><small>DNS RECORDS</small><strong id="dnsCount">—</strong></div><div class="metric"><small>SHODAN HOSTS</small><strong id="hostCount">—</strong></div><div class="metric"><small>OPEN PORTS REPORTED</small><strong id="portCount">—</strong></div><div class="metric"><small>LAST LOOKUP</small><strong id="lastLookup" style="font-size:13px">—</strong></div>
+  </div></div></section>
+  <section class="panel"><div class="ph">⌬ SHODAN / RECON FINDINGS <span id="findingLabel">0 RESULTS</span></div><div style="overflow:auto"><table><thead><tr><th>TYPE</th><th>DETAIL</th><th>SOURCE</th></tr></thead><tbody id="findings"><tr><td colspan="3" class="empty">Enter a domain or IP, then run a lookup. No demo findings are shown.</td></tr></tbody></table></div></section>
+ </main>
+ <aside class="stack rightcol">
+  <section class="panel"><div class="ph">◉ LIVE CONNECTIONS</div><div class="body"><div class="feedrow"><strong id="healthTitle">Backend</strong><small id="healthDetail">Waiting for health check</small></div><div class="feedrow"><strong>Data integrity</strong><small>Only API responses are displayed as findings.</small></div><div class="feedrow"><strong>Credentials</strong><small>Shodan key stays in Worker secret, never in this page.</small></div></div></section>
+  <section class="panel"><div class="ph">⌁ EVENT TIMELINE <span id="eventCount">0 EVENTS</span></div><div class="body" id="events"><div class="empty">No events yet.</div></div></section>
+  <section class="panel"><div class="ph">⌁ PUBLIC RECON</div><div class="body"><div class="feedrow"><strong>DNS A / AAAA / MX / TXT</strong><small>Passive DNS records from public resolver</small></div><div class="feedrow"><strong>Shodan host lookup</strong><small>Existing indexed host data; requires API key and valid access</small></div><div class="feedrow"><strong>Automatic background scanning</strong><small>Disabled. No fake continuous scans.</small></div></div></section>
+ </aside>
+</div>
+<div class="bottomgrid">
+ <section class="panel"><div class="ph">⌁ RAW RESPONSE / DIAGNOSTICS</div><div class="body"><div id="console" class="console">[BOOT] Dashboard loaded. Waiting for backend status…</div></div></section>
+ <section class="panel"><div class="ph">ⓘ OPERATING NOTES</div><div class="body muted">This interface performs passive queries only. It does not scan arbitrary networks, exploit hosts, or claim to detect live attacks. Shodan results describe indexed observations and may be delayed. Use only targets you own or are authorized to assess.</div></section>
+</div>
+<div class="foot"><span>RECON & SHODAN OSINT COMMAND CENTER</span><span>NEON INTERFACE • PASSIVE LOOKUPS • NO SIMULATED DATA</span><span id="clock">--:--:-- UTC</span></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const apiStatus=$('apiStatus');
+let events=[];
+function log(msg){const t=new Date().toISOString();$('console').textContent=`[${t}] ${msg}\n`+$('console').textContent;}
+function event(msg,type='info'){events.unshift({time:new Date().toLocaleTimeString(),msg,type});events=events.slice(0,8);$('events').innerHTML=events.map(e=>`<div class="feedrow"><strong style="color:${e.type==='err'?'var(--red)':e.type==='ok'?'var(--green)':'var(--cyan)'}">${esc(e.msg)}</strong><small>${e.time}</small></div>`).join('');$('eventCount').textContent=events.length+' EVENTS';}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const map=L.map('map',{zoomControl:true}).setView([20,0],2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:18}).addTo(map);
+const markers=L.layerGroup().addTo(map);
+function addMarker(lat,lon,title,detail){if(!Number.isFinite(lat)||!Number.isFinite(lon))return;const m=L.circleMarker([lat,lon],{radius:7,color:'#ff5bd6',weight:2,fillColor:'#58e5ff',fillOpacity:.85}).bindPopup(`<b>${esc(title)}</b><br>${esc(detail||'Approximate IP geolocation')}`);markers.addLayer(m);map.setView([lat,lon],Math.max(map.getZoom(),4));}
+async function api(path){const r=await fetch(path,{headers:{'Accept':'application/json'}});const data=await r.json().catch(()=>({error:'Backend returned non-JSON response'}));if(!r.ok)throw new Error(data.error||`HTTP ${r.status}`);return data;}
+async function health(){try{const h=await api('/api/health');apiStatus.textContent='● BACKEND ONLINE';apiStatus.style.color='var(--green)';$('workerStatus').textContent='Connected';$('healthTitle').textContent='Cloudflare Worker ONLINE';$('healthDetail').textContent='Health endpoint answered at '+new Date().toLocaleTimeString();$('shodanStatus').textContent=h.shodanConfigured?'API secret configured (not a guarantee of API access)':'API secret not configured';$('healthTitle').style.color='var(--green)';log('Backend health check succeeded.');}catch(e){apiStatus.textContent='● BACKEND NOT READY';apiStatus.style.color='var(--amber)';$('workerStatus').textContent='Not connected: '+e.message;$('healthTitle').textContent='Backend unavailable';$('healthDetail').textContent='Deploy Worker and configure API secret.';log('Health check: '+e.message);}}
+function target(){const t=$('target').value.trim();if(!t)throw new Error('Masukkan domain atau alamat IP terlebih dahulu.');if(t.length>253||!/^[a-zA-Z0-9.-]+$/.test(t))throw new Error('Format target tidak valid. Gunakan domain atau IP tanpa URL/path.');return t;}
+function showRows(rows){$('findings').innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.type)}</td><td>${esc(r.detail)}</td><td>${esc(r.source)}</td></tr>`).join(''):'<tr><td colspan="3" class="empty">API tidak mengembalikan temuan.</td></tr>';$('findingLabel').textContent=rows.length+' RESULTS';}
+$('reconBtn').addEventListener('click',async()=>{let t;try{t=target()}catch(e){event(e.message,'err');return}const b=$('reconBtn');b.disabled=true;b.textContent='QUERYING…';$('targetState').textContent='QUERY IN PROGRESS';try{const d=await api('/api/recon?target='+encodeURIComponent(t));const rows=[];for(const rr of (d.records||[])){for(const item of (rr.Answer||[])){rows.push({type:rr.type,detail:item.data,source:'Public DNS'});}}$('dnsCount').textContent=rows.length;showRows(rows);$('targetState').textContent='RECON COMPLETE';$('lastLookup').textContent=new Date().toLocaleTimeString();event('Passive DNS lookup completed for '+t,'ok');log('Passive DNS response received for '+t);log(JSON.stringify(d).slice(0,1600));}catch(e){$('targetState').textContent='QUERY ERROR';event('Recon failed: '+e.message,'err');log('Recon error: '+e.message)}finally{b.disabled=false;b.textContent='RUN PASSIVE RECON'}});
+$('shodanBtn').addEventListener('click',async()=>{let t;try{t=target()}catch(e){event(e.message,'err');return}const b=$('shodanBtn');b.disabled=true;b.textContent='LOOKING UP…';$('targetState').textContent='SHODAN LOOKUP';try{const d=await api('/api/shodan/host?target='+encodeURIComponent(t));const rows=[];rows.push({type:'Host',detail:d.ip_str||t,source:'Shodan API'});if(d.org)rows.push({type:'Organization',detail:d.org,source:'Shodan API'});if(d.isp)rows.push({type:'ISP',detail:d.isp,source:'Shodan API'});if(d.country_name)rows.push({type:'Country',detail:d.country_name,source:'Shodan API'});for(const p of (d.ports||[]))rows.push({type:'Port',detail:String(p),source:'Shodan API'});for(const s of (d.data||[]).slice(0,12))rows.push({type:'Service',detail:`${s.port||'?'} / ${s.transport||''} — ${(s.product||s._shodan?.module||'service')}${s.version?' '+s.version:''}`,source:'Shodan API'});$('hostCount').textContent='1';$('portCount').textContent=(d.ports||[]).length;$('dnsCount').textContent=$('dnsCount').textContent==='—'?'—':$('dnsCount').textContent;showRows(rows);$('targetState').textContent='SHODAN DATA RECEIVED';$('lastLookup').textContent=new Date().toLocaleTimeString();if(Number.isFinite(d.latitude)&&Number.isFinite(d.longitude)){markers.clearLayers();addMarker(d.latitude,d.longitude,d.ip_str||t,[d.city,d.country_name,d.org].filter(Boolean).join(' • '));$('mapLabel').textContent='Approximate IP geolocation returned by Shodan';}event('Shodan host lookup returned data for '+t,'ok');log('Shodan response received for '+t);log(JSON.stringify(d).slice(0,1600));$('shodanStatus').textContent='Lookup succeeded at '+new Date().toLocaleTimeString();}catch(e){$('targetState').textContent='SHODAN LOOKUP ERROR';$('shodanStatus').textContent=e.message;event('Shodan lookup failed: '+e.message,'err');log('Shodan error: '+e.message)}finally{b.disabled=false;b.textContent='SHODAN LOOKUP'}});
+health();setInterval(health,30000);setInterval(()=>$('clock').textContent=new Date().toISOString().slice(11,19)+' UTC',1000);
+</script>
+</body>
+</html>
